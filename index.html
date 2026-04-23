@@ -85,22 +85,22 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ─── CONFIGURATION ─────────────────────────────────────────────────
-const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.c7311dde2cbd58702f9bc62d70cdd70b40f76e1309fe44d715713456bb64ec53'; // ← Replace with your new PAT after revoking the old one
+// ─── CONFIGURATION ──────────────────────────────────────────────────
+const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.c7311dde2cbd58702f9bc62d70cdd70b40f76e1309fe44d715713456bb64ec53'; // ← Replace with your PAT
 const BASE_ID        = 'appPnZ5jc99OYswdm';
 const TABLE_ID       = 'tbl9GsDvW3Vwu6dTX';
+// ────────────────────────────────────────────────────────────────────
 
-// Field IDs from the aircraft table
-const F_NAME   = 'fldyAYvlYnlNuxSha';
-const F_STATUS = 'fldyz0juOgCZDT2F7';
-const F_ICAO   = 'fldrUpXc5xreQ8SiT';
-const F_LAT    = 'fld1hswtb3GecHZ0L';
-const F_LON    = 'fldf7EcM8Se73lNzc';
-const F_ALT    = 'fldQPgJtwvgnvlnap';
-const F_GS     = 'fldpsOgryhNNfZUeN';
-const F_TRACK  = 'fldqIjmQG5avvzYJZ';
-const F_LOC    = 'fldZA8MdAaEsc0k3Q';
-// ───────────────────────────────────────────────────────────────────
+// Airtable returns fields by NAME, not ID, so we use exact field names as keys
+const F_NAME   = 'Mailing List Title';
+const F_STATUS = 'Current Flight Status';
+const F_ICAO   = 'ICAO24';
+const F_LAT    = 'Latitude';
+const F_LON    = 'Longitude';
+const F_ALT    = 'Altitude';
+const F_GS     = 'Groundspeed';
+const F_TRACK  = 'Track';
+const F_LOC    = 'Aircraft Location';
 
 let map, markers = [];
 
@@ -124,27 +124,27 @@ function planeIcon(trackStr) {
 }
 
 async function fetchAllRecords() {
-  // Build URL with fields[] params — do NOT encode the brackets, Airtable requires literal []
-  const fieldIds = [F_NAME, F_STATUS, F_ICAO, F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC];
-  const fieldParams = fieldIds.map(id => 'fields[]=' + id).join('&');
+  // Request fields by name — Airtable returns them by name in the response
+  var fieldNames = [F_NAME, F_STATUS, F_ICAO, F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC];
+  var fieldParams = fieldNames.map(function(n) { return 'fields[]=' + encodeURIComponent(n); }).join('&');
 
-  let records = [];
-  let offset = null;
+  var records = [];
+  var offset = null;
 
   do {
-    let url = 'https://api.airtable.com/v0/' + BASE_ID + '/' + TABLE_ID + '?' + fieldParams + '&pageSize=100';
+    var url = 'https://api.airtable.com/v0/' + BASE_ID + '/' + TABLE_ID + '?' + fieldParams + '&pageSize=100';
     if (offset) url += '&offset=' + encodeURIComponent(offset);
 
-    const resp = await fetch(url, {
+    var resp = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN }
     });
 
     if (!resp.ok) {
-      const err = await resp.json().catch(function() { return {}; });
+      var err = await resp.json().catch(function() { return {}; });
       throw new Error((err && err.error && err.error.message) || ('Airtable returned HTTP ' + resp.status));
     }
 
-    const data = await resp.json();
+    var data = await resp.json();
     records = records.concat(data.records || []);
     offset = data.offset || null;
   } while (offset);
@@ -153,7 +153,7 @@ async function fetchAllRecords() {
 }
 
 async function loadData() {
-  const btn = document.getElementById('refresh-btn');
+  var btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   document.getElementById('loading').classList.remove('hidden');
   document.getElementById('loading-label').textContent = 'Fetching aircraft data…';
@@ -161,43 +161,43 @@ async function loadData() {
   markers.forEach(function(m) { map.removeLayer(m); });
   markers = [];
 
-  let records;
+  var records;
   try {
     records = await fetchAllRecords();
   } catch(e) {
     document.getElementById('loading').innerHTML =
-      '<div class="error-box"><strong>Could not load aircraft data</strong><br><br>' + e.message + '<br><br>Check that your Airtable Personal Access Token is correctly set in the HTML file.</div>' +
+      '<div class="error-box"><strong>Could not load aircraft data</strong><br><br>' + e.message + '</div>' +
       '<button class="refresh-btn" style="margin-top:14px;" onclick="location.reload()">Try again</button>';
     btn.disabled = false;
     return;
   }
 
-  const total = records.length;
-  let airborneCount = 0, plotted = 0;
-  const bounds = [];
+  var total = records.length;
+  var airborneCount = 0, plotted = 0;
+  var bounds = [];
 
   for (var i = 0; i < records.length; i++) {
-    const f = records[i].fields;
+    var f = records[i].fields;
 
-    const name   = f[F_NAME]   || 'Unknown';
-    const status = f[F_STATUS] || '';
-    const lat    = parseFloat(f[F_LAT]);
-    const lon    = parseFloat(f[F_LON]);
-    const alt    = f[F_ALT]    || '—';
-    const gs     = f[F_GS]     || '—';
-    const track  = f[F_TRACK]  || '—';
-    const loc    = (f[F_LOC] && typeof f[F_LOC] === 'object') ? f[F_LOC].name : (f[F_LOC] || '—');
-    const icao   = f[F_ICAO]   || '—';
+    var name   = f[F_NAME]   || 'Unknown';
+    var status = f[F_STATUS] || '';
+    var lat    = parseFloat(f[F_LAT]);
+    var lon    = parseFloat(f[F_LON]);
+    var alt    = f[F_ALT]    || '—';
+    var gs     = f[F_GS]     || '—';
+    var track  = f[F_TRACK]  || '—';
+    var loc    = (f[F_LOC] && typeof f[F_LOC] === 'object') ? f[F_LOC].name : (f[F_LOC] || '—');
+    var icao   = f[F_ICAO]   || '—';
 
-    const isAirborne = (status !== '' && status !== 'On Ground');
+    var isAirborne = (status !== '' && status !== 'On Ground');
     if (isAirborne) airborneCount++;
     if (!isAirborne || isNaN(lat) || isNaN(lon)) continue;
 
-    const parts = name.split(' - ');
-    const tail  = parts[0] || name;
-    const model = parts.slice(1).join(' ') || '';
+    var parts = name.split(' - ');
+    var tail  = parts[0] || name;
+    var model = parts.slice(1).join(' ') || '';
 
-    const popup =
+    var popup =
       '<div class="popup-inner">' +
         '<div class="popup-tail">' + tail + '</div>' +
         '<div class="popup-model">' + model + '</div>' +
@@ -211,7 +211,7 @@ async function loadData() {
         '</div>' +
       '</div>';
 
-    const marker = L.marker([lat, lon], { icon: planeIcon(track) })
+    var marker = L.marker([lat, lon], { icon: planeIcon(track) })
       .bindPopup(popup, { maxWidth: 260 })
       .addTo(map);
     markers.push(marker);
@@ -238,7 +238,6 @@ async function loadData() {
 initMap();
 loadData();
 
-// Auto-refresh every 60 seconds
 setInterval(loadData, 60000);
 </script>
 </body>
