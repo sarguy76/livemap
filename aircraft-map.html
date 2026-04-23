@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Aircraft Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    background: #f4f5f7;
+    color: #1a1a2e;
+    overflow: hidden;
+  }
+
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  #header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e5ea;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 9px; }
+
+  .brand-icon {
+    width: 32px; height: 32px;
+    background: #1a56db;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .brand-icon svg { width: 18px; height: 18px; }
+  .brand-name { font-size: 14px; font-weight: 600; color: #111827; }
+  .brand-sub  { font-size: 11px; color: #6b7280; margin-top: 1px; }
+
+  .stats { display: flex; gap: 8px; align-items: center; }
+
+  .stat {
+    display: flex; align-items: center; gap: 6px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  .stat-dot { width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; }
+  .stat-dot.live {
+    background: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.2);
+    animation: livepulse 2s infinite;
+  }
+
+  @keyframes livepulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(22,163,74,0.2); }
+    50%       { box-shadow: 0 0 0 5px rgba(22,163,74,0.05); }
+  }
+
+  .stat-text { font-size: 12px; font-weight: 500; color: #374151; }
+  .stat-text strong { color: #111827; }
+
+  .refresh-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff; color: #374151;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .refresh-btn:hover    { background: #f9fafb; border-color: #9ca3af; }
+  .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #map { flex: 1; width: 100%; }
+
+  #statusbar {
+    background: #fff;
+    border-top: 1px solid #e2e5ea;
+    padding: 5px 16px;
+    font-size: 11px; color: #6b7280;
+    flex-shrink: 0;
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 10px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
+    border: 1px solid #e5e7eb !important;
+    padding: 0 !important;
+  }
+  .leaflet-popup-content { margin: 0 !important; }
+
+  .popup-inner  { padding: 12px 14px; min-width: 210px; }
+  .popup-tail   { font-size: 14px; font-weight: 600; color: #111827; }
+  .popup-model  { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+  .popup-badge  {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #dcfce7; color: #15803d;
+    border-radius: 4px; padding: 2px 8px;
+    font-size: 11px; font-weight: 500; margin-bottom: 10px;
+  }
+  .popup-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .popup-lbl    { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 1px; }
+  .popup-val    { font-size: 12px; font-weight: 500; color: #1f2937; }
+
+  #loading {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.92);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999; gap: 12px;
+    transition: opacity 0.3s;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #1a56db;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-label { font-size: 13px; color: #6b7280; }
+
+  .error-box {
+    background: #fef2f2; border: 1px solid #fecaca;
+    border-radius: 8px; padding: 14px 18px;
+    color: #991b1b; font-size: 12px;
+    max-width: 360px; text-align: center; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 16L13 10V4.5C13 3.67 12.33 3 11.5 3S10 3.67 10 4.5V10L2 16V18L10 15.5V20.5L8 22V23.5L11.5 22.5L15 23.5V22L13 20.5V15.5L21 18V16Z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Live Fleet Map</div>
+        <div class="brand-sub">Operations Dashboard</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-dot live"></div>
+        <div class="stat-text"><strong id="stat-airborne">—</strong> airborne</div>
+      </div>
+      <div class="stat">
+        <div class="stat-dot"></div>
+        <div class="stat-text"><strong id="stat-ground">—</strong> on ground</div>
+      </div>
+      <div class="stat" style="background:none; border:none; padding-left:4px;">
+        <div class="stat-text" style="color:#9ca3af;">Updated <strong id="stat-time" style="color:#6b7280;">—</strong></div>
+      </div>
+    </div>
+
+    <button class="refresh-btn" id="refresh-btn" onclick="loadData()">↺ Refresh</button>
+  </div>
+
+  <div id="map"></div>
+  <div id="statusbar">Initializing…</div>
+
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-label" id="loading-label">Connecting to Airtable…</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── CONFIGURATION ─────────────────────────────────────────────────
+const AIRTABLE_TOKEN = 'YOUR_AIRTABLE_PAT_HERE'; // ← Paste your Personal Access Token here
+const BASE_ID        = 'appPnZ5jc99OYswdm';
+const TABLE_ID       = 'tbl9GsDvW3Vwu6dTX';
+
+const F = {
+  name:   'fldyAYvlYnlNuxSha',
+  status: 'fldyz0juOgCZDT2F7',
+  icao:   'fldrUpXc5xreQ8SiT',
+  lat:    'fld1hswtb3GecHZ0L',
+  lon:    'fldf7EcM8Se73lNzc',
+  alt:    'fldQPgJtwvgnvlnap',
+  gs:     'fldpsOgryhNNfZUeN',
+  track:  'fldqIjmQG5avvzYJZ',
+  loc:    'fldZA8MdAaEsc0k3Q',
+};
+// ───────────────────────────────────────────────────────────────────
+
+let map, markers = [];
+
+function initMap() {
+  map = L.map('map').setView([33.1, -117.2], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 18
+  }).addTo(map);
+}
+
+function planeIcon(trackStr) {
+  const deg = parseFloat((String(trackStr || '0').match(/(\d+(\.\d+)?)/)||['0','0'])[1]) || 0;
+  return L.divIcon({
+    html: `<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg);">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="#1a56db" stroke-width="1.5"/>
+        <path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="#1a56db"/>
+        <circle cx="18" cy="18" r="2.5" fill="white"/>
+      </svg>
+    </div>`,
+    className: '',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20]
+  });
+}
+
+async function fetchAllRecords() {
+  const fieldList = Object.values(F).map(id => `fields[]=${encodeURIComponent(id)}`).join('&');
+  let records = [], offset = null;
+
+  do {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?${fieldList}&pageSize=100${offset ? `&offset=${encodeURIComponent(offset)}` : ''}`;
+    const resp = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Airtable returned HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    records = records.concat(data.records || []);
+    offset = data.offset || null;
+  } while (offset);
+
+  return records;
+}
+
+async function loadData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('loading-label').textContent = 'Fetching aircraft data…';
+
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  let records;
+  try {
+    records = await fetchAllRecords();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = `
+      <div class="error-box">
+        <strong>Could not load aircraft data</strong><br><br>
+        ${e.message}<br><br>
+        Check that your Airtable Personal Access Token is correctly set in the HTML file.
+      </div>
+      <button class="refresh-btn" style="margin-top:14px;" onclick="location.reload()">Try again</button>`;
+    btn.disabled = false;
+    return;
+  }
+
+  const total = records.length;
+  let airborneCount = 0, plotted = 0;
+  const bounds = [];
+
+  for (const rec of records) {
+    const f = rec.fields;
+    const name   = f[F.name]   || 'Unknown';
+    const status = f[F.status] || '';
+    const lat    = parseFloat(f[F.lat]);
+    const lon    = parseFloat(f[F.lon]);
+    const alt    = f[F.alt]    || '—';
+    const gs     = f[F.gs]     || '—';
+    const track  = f[F.track]  || '—';
+    const loc    = (f[F.loc] && typeof f[F.loc] === 'object') ? f[F.loc].name : (f[F.loc] || '—');
+    const icao   = f[F.icao]   || '—';
+
+    const isAirborne = status !== '' && status !== 'On Ground';
+    if (isAirborne) airborneCount++;
+    if (!isAirborne || isNaN(lat) || isNaN(lon)) continue;
+
+    const parts = name.split(' - ');
+    const tail  = parts[0] || name;
+    const model = parts.slice(1).join(' ') || '';
+
+    const popup = `
+      <div class="popup-inner">
+        <div class="popup-tail">${tail}</div>
+        <div class="popup-model">${model}</div>
+        <div class="popup-badge">
+          <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>
+          ${status}
+        </div>
+        <div class="popup-grid">
+          <div><div class="popup-lbl">Altitude</div><div class="popup-val">${alt}</div></div>
+          <div><div class="popup-lbl">Groundspeed</div><div class="popup-val">${gs}</div></div>
+          <div><div class="popup-lbl">Track</div><div class="popup-val">${track}</div></div>
+          <div><div class="popup-lbl">Home</div><div class="popup-val">${loc}</div></div>
+          <div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#6b7280;">${icao}</div></div>
+        </div>
+      </div>`;
+
+    const marker = L.marker([lat, lon], { icon: planeIcon(track) })
+      .bindPopup(popup, { maxWidth: 260 })
+      .addTo(map);
+    markers.push(marker);
+    bounds.push([lat, lon]);
+    plotted++;
+  }
+
+  document.getElementById('stat-airborne').textContent = airborneCount;
+  document.getElementById('stat-ground').textContent   = total - airborneCount;
+  document.getElementById('stat-time').textContent     = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12 });
+  }
+
+  document.getElementById('statusbar').textContent = plotted > 0
+    ? `${plotted} aircraft plotted · ${airborneCount - plotted} airborne without position data · ${total - airborneCount} on ground · Click any aircraft for details`
+    : `No airborne aircraft with position data right now · ${total} total aircraft in fleet`;
+
+  document.getElementById('loading').classList.add('hidden');
+  btn.disabled = false;
+}
+
+initMap();
+loadData();
+
+// Auto-refresh every 60 seconds
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>
