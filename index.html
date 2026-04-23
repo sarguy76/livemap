@@ -10,39 +10,58 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: 'Inter', sans-serif; font-size: 13px; background: #f4f5f7; color: #1a1a2e; overflow: hidden; }
   #app { display: flex; flex-direction: column; height: 100vh; }
-  #header { background: #ffffff; border-bottom: 1px solid #e2e5ea; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; }
+
+  #header { background: #fff; border-bottom: 1px solid #e2e5ea; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; }
   .brand { display: flex; align-items: center; gap: 9px; }
   .brand-icon { width: 32px; height: 32px; background: #1a56db; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .brand-icon svg { width: 18px; height: 18px; }
   .brand-name { font-size: 14px; font-weight: 600; color: #111827; }
   .brand-sub  { font-size: 11px; color: #6b7280; margin-top: 1px; }
-  .stats { display: flex; gap: 8px; align-items: center; }
+  .stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .stat { display: flex; align-items: center; gap: 6px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px; padding: 4px 12px; }
   .stat-dot { width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; }
   .stat-dot.live { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); animation: livepulse 2s infinite; }
-  @keyframes livepulse { 0%, 100% { box-shadow: 0 0 0 3px rgba(22,163,74,0.2); } 50% { box-shadow: 0 0 0 5px rgba(22,163,74,0.05); } }
+  @keyframes livepulse { 0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2)}50%{box-shadow:0 0 0 5px rgba(22,163,74,0.05)} }
   .stat-text { font-size: 12px; font-weight: 500; color: #374151; }
   .stat-text strong { color: #111827; }
-  .refresh-btn { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; transition: background 0.15s, border-color 0.15s; flex-shrink: 0; }
-  .refresh-btn:hover { background: #f9fafb; border-color: #9ca3af; }
-  .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; transition: background 0.15s, border-color 0.15s; flex-shrink: 0; }
+  .btn:hover { background: #f9fafb; border-color: #9ca3af; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-danger { border-color: #fca5a5; background: #fff; color: #b91c1c; }
+  .btn-danger:hover { background: #fef2f2; border-color: #f87171; }
+
   #map { flex: 1; width: 100%; }
   #statusbar { background: #fff; border-top: 1px solid #e2e5ea; padding: 5px 16px; font-size: 11px; color: #6b7280; flex-shrink: 0; }
+
   .leaflet-popup-content-wrapper { border-radius: 10px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important; border: 1px solid #e5e7eb !important; padding: 0 !important; }
   .leaflet-popup-content { margin: 0 !important; }
-  .popup-inner { padding: 12px 14px; min-width: 210px; }
+  .popup-inner { padding: 12px 14px; min-width: 220px; }
   .popup-tail  { font-size: 14px; font-weight: 600; color: #111827; }
   .popup-model { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
   .popup-badge { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; margin-bottom: 10px; }
-  .popup-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .popup-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
   .popup-lbl   { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 1px; }
   .popup-val   { font-size: 12px; font-weight: 500; color: #1f2937; }
-  #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 12px; transition: opacity 0.3s; }
+  .popup-track-info { font-size: 11px; color: #6b7280; margin-bottom: 10px; padding: 6px 8px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb; }
+  .popup-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .popup-btn { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
+  .popup-btn:hover { background: #f9fafb; }
+  .popup-btn-land { border-color: #fca5a5; color: #b91c1c; }
+  .popup-btn-land:hover { background: #fef2f2; }
+
+  #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.93); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 12px; transition: opacity 0.3s; }
   #loading.hidden { opacity: 0; pointer-events: none; }
   .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #1a56db; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-label { font-size: 13px; color: #6b7280; }
   .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 18px; color: #991b1b; font-size: 12px; max-width: 360px; text-align: center; line-height: 1.6; }
+
+  #confirm-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 10000; align-items: center; justify-content: center; }
+  #confirm-modal.show { display: flex; }
+  .modal-box { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 24px; width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+  .modal-title { font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 8px; }
+  .modal-body  { font-size: 13px; color: #6b7280; line-height: 1.6; margin-bottom: 18px; }
+  .modal-acts  { display: flex; gap: 8px; justify-content: flex-end; }
 </style>
 </head>
 <body>
@@ -50,9 +69,7 @@
   <div id="header">
     <div class="brand">
       <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 16L13 10V4.5C13 3.67 12.33 3 11.5 3S10 3.67 10 4.5V10L2 16V18L10 15.5V20.5L8 22V23.5L11.5 22.5L15 23.5V22L13 20.5V15.5L21 18V16Z"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="white"><path d="M21 16L13 10V4.5C13 3.67 12.33 3 11.5 3S10 3.67 10 4.5V10L2 16V18L10 15.5V20.5L8 22V23.5L11.5 22.5L15 23.5V22L13 20.5V15.5L21 18V16Z"/></svg>
       </div>
       <div>
         <div class="brand-name">Live Fleet Map</div>
@@ -60,19 +77,12 @@
       </div>
     </div>
     <div class="stats">
-      <div class="stat">
-        <div class="stat-dot live"></div>
-        <div class="stat-text"><strong id="stat-airborne">—</strong> airborne</div>
-      </div>
-      <div class="stat">
-        <div class="stat-dot"></div>
-        <div class="stat-text"><strong id="stat-ground">—</strong> on ground</div>
-      </div>
-      <div class="stat" style="background:none; border:none; padding-left:4px;">
-        <div class="stat-text" style="color:#9ca3af;">Updated <strong id="stat-time" style="color:#6b7280;">—</strong></div>
-      </div>
+      <div class="stat"><div class="stat-dot live"></div><div class="stat-text"><strong id="stat-airborne">—</strong> airborne</div></div>
+      <div class="stat"><div class="stat-dot"></div><div class="stat-text"><strong id="stat-ground">—</strong> on ground</div></div>
+      <div class="stat"><div class="stat-dot" style="background:#1a56db;"></div><div class="stat-text"><strong id="stat-pts">—</strong> track pts</div></div>
+      <div class="stat" style="background:none;border:none;padding-left:4px;"><div class="stat-text" style="color:#9ca3af;">Updated <strong id="stat-time" style="color:#6b7280;">—</strong></div></div>
     </div>
-    <button class="refresh-btn" id="refresh-btn" onclick="loadData()">↺ Refresh</button>
+    <button class="btn" id="refresh-btn" onclick="loadData()">↺ Refresh</button>
   </div>
   <div id="map"></div>
   <div id="statusbar">Initializing…</div>
@@ -83,28 +93,75 @@
   <div class="loading-label" id="loading-label">Connecting to Airtable…</div>
 </div>
 
+<div id="confirm-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Mark aircraft as landed?</div>
+    <div class="modal-body"  id="modal-body"></div>
+    <div class="modal-acts">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm">Clear &amp; land</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ─── CONFIGURATION ──────────────────────────────────────────────────
-const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.aecbf876e60c06f078e94d8ee4df3e9cbd90bcf04dc60a05343c22e2843ee219'; // ← Replace with your PAT
+// ─── CONFIGURATION ───────────────────────────────────────────────────────────
+const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.aecbf876e60c06f078e94d8ee4df3e9cbd90bcf04dc60a05343c22e2843ee219'; // ← Replace with your Personal Access Token
 const BASE_ID        = 'appPnZ5jc99OYswdm';
-const TABLE_ID       = 'tbl9GsDvW3Vwu6dTX';
-// ────────────────────────────────────────────────────────────────────
+const AC_TABLE       = 'tbl9GsDvW3Vwu6dTX';   // Aircraft Data
+const HIST_TABLE     = 'tblgTqap1nhbaa5FD';   // Aircraft Track History
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Airtable returns fields by NAME, not ID, so we use exact field names as keys
-const F_NAME   = 'Mailing List Title';
-const F_STATUS = 'Current Flight Status';
-const F_ICAO   = 'ICAO24';
-const F_LAT    = 'Latitude';
-const F_LON    = 'Longitude';
-const F_ALT    = 'Altitude';
-const F_GS     = 'Groundspeed';
-const F_TRACK  = 'Track';
-const F_LOC    = 'Aircraft Location';
-const F_SQUAWK = 'Current Squawk';
+// Aircraft Data field names (Airtable API uses names, not IDs, in REST responses)
+const F_NN      = 'N-Number';
+const F_TITLE   = 'Mailing List Title';
+const F_MODEL   = 'Model Group';
+const F_STATUS  = 'Current Flight Status';
+const F_AIRBORN = 'Airborne Status';
+const F_ICAO    = 'ICAO24';
+const F_LAT     = 'Latitude';
+const F_LON     = 'Longitude';
+const F_ALT     = 'Altitude';
+const F_GS      = 'Groundspeed';
+const F_TRACK   = 'Track';
+const F_LOC     = 'Aircraft Location';
+const F_SQUAWK  = 'Current Squawk';
+const F_CS      = 'Current Callsign';
+const F_ORIGIN  = 'Origin ICAO';
+const F_DEST    = 'Destination ICAO';
+const F_SEEN    = 'Last Seen (sec ago)';
 
-let map, markers = [];
+// Aircraft Data field IDs (needed for PATCH updates)
+const FID_AIRBORN = 'fld443YjcAFlV4GNa';
+const FID_CS      = 'fldS0NIqjlcAqPQV1';
+const FID_ORIGIN  = 'fldjamsMbZ3tiJPs6';
+const FID_DEST    = 'fldNMDf5HpFy8rSwB';
+const FID_STATUS  = 'fldyz0juOgCZDT2F7';
+const FID_EMERG   = 'fld9B72TrQkBzhQQ5';
+const FID_LATRAW  = 'fld1hswtb3GecHZ0L';
+const FID_LONRAW  = 'fldf7EcM8Se73lNzc';
+const FID_SQUAWK  = 'fld1aNWYM70fYlfXl';
+const FID_SEEN    = 'flddTW611o8WmWbwe';
+const FID_GSRAW   = 'fldSCIANXX6KyWYil';
+const FID_ALTRAW  = 'fldqBE7x4hkUKbbpc';
+const FID_TRKRAW  = 'fldrWz2pLLYW3yPEP';
+const FID_VSIRAW  = 'fldg5dCK9svPovezS';
 
+// Track History field names
+const HF_NN    = 'N-Number';   // linked record — returns array of {id, name}
+const HF_TS    = 'Timestamp';
+const HF_LAT   = 'Latitude';
+const HF_LON   = 'Longitude';
+const HF_FID   = 'Flight ID';
+
+// Track colors per aircraft (cycles)
+const TRACK_COLORS = ['#1a56db','#c0392b','#7f56da','#0e9f6e','#c27803','#d45087'];
+let colorIndex = {};
+
+let map, acMarkers = [], trackLines = [], histRecords = [];
+
+// ─── MAP INIT ────────────────────────────────────────────────────────────────
 function initMap() {
   map = L.map('map').setView([33.1, -117.2], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -113,10 +170,22 @@ function initMap() {
   }).addTo(map);
 }
 
-function planeIcon(trackStr) {
-  const deg = parseFloat((String(trackStr || '0').match(/(\d+(\.\d+)?)/)||['0','0'])[1]) || 0;
+// ─── ICON ────────────────────────────────────────────────────────────────────
+function planeIcon(trackStr, color) {
+  var deg = 0;
+  if (trackStr) {
+    var m = String(trackStr).match(/(\d+(\.\d+)?)/);
+    if (m) deg = parseFloat(m[1]) || 0;
+  }
+  var c = color || '#1a56db';
+  var bg = c + '20'; // 12% alpha hex approximation
   return L.divIcon({
-    html: '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate(' + deg + 'deg);"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="#1a56db" stroke-width="1.5"/><path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="#1a56db"/><circle cx="18" cy="18" r="2.5" fill="white"/></svg></div>',
+    html: '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
+          '<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="'+c+'" stroke-width="1.5"/>' +
+          '<path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="'+c+'"/>' +
+          '<circle cx="18" cy="18" r="2.5" fill="white"/>' +
+          '</svg></div>',
     className: '',
     iconSize: [36, 36],
     iconAnchor: [18, 18],
@@ -124,106 +193,208 @@ function planeIcon(trackStr) {
   });
 }
 
-async function fetchAllRecords() {
-  // Request fields by name — Airtable returns them by name in the response
-  var fieldNames = [F_NAME, F_STATUS, F_ICAO, F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC, F_SQUAWK];
-  var fieldParams = fieldNames.map(function(n) { return 'fields[]=' + encodeURIComponent(n); }).join('&');
+// ─── AIRTABLE REST HELPERS ───────────────────────────────────────────────────
+async function atFetch(path, opts) {
+  var resp = await fetch('https://api.airtable.com/v0/' + BASE_ID + path, Object.assign({
+    headers: { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN, 'Content-Type': 'application/json' }
+  }, opts || {}));
+  if (!resp.ok) {
+    var e = await resp.json().catch(function(){ return {}; });
+    throw new Error((e.error && e.error.message) || 'HTTP ' + resp.status);
+  }
+  return resp.json();
+}
 
-  var records = [];
-  var offset = null;
-
+async function fetchAllFromTable(tableId, fieldNames) {
+  var params = fieldNames.map(function(n){ return 'fields[]=' + encodeURIComponent(n); }).join('&');
+  var records = [], offset = null;
   do {
-    var url = 'https://api.airtable.com/v0/' + BASE_ID + '/' + TABLE_ID + '?' + fieldParams + '&pageSize=100';
+    var url = '/' + tableId + '?' + params + '&pageSize=100';
     if (offset) url += '&offset=' + encodeURIComponent(offset);
-
-    var resp = await fetch(url, {
-      headers: { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN }
-    });
-
-    if (!resp.ok) {
-      var err = await resp.json().catch(function() { return {}; });
-      throw new Error((err && err.error && err.error.message) || ('Airtable returned HTTP ' + resp.status));
-    }
-
-    var data = await resp.json();
+    var data = await atFetch(url);
     records = records.concat(data.records || []);
     offset = data.offset || null;
   } while (offset);
-
   return records;
 }
 
+async function patchRecord(tableId, recId, fields) {
+  return atFetch('/' + tableId + '/' + recId, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: fields })
+  });
+}
+
+async function deleteRecords(tableId, ids) {
+  // Airtable allows up to 10 deletes per request
+  for (var i = 0; i < ids.length; i += 10) {
+    var batch = ids.slice(i, i + 10);
+    var qs = batch.map(function(id){ return 'records[]=' + id; }).join('&');
+    await atFetch('/' + tableId + '?' + qs, { method: 'DELETE' });
+  }
+}
+
+// ─── LOAD DATA ───────────────────────────────────────────────────────────────
 async function loadData() {
   var btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   document.getElementById('loading').classList.remove('hidden');
   document.getElementById('loading-label').textContent = 'Fetching aircraft data…';
 
-  markers.forEach(function(m) { map.removeLayer(m); });
-  markers = [];
+  // Clear existing layers
+  acMarkers.forEach(function(m){ map.removeLayer(m); });
+  trackLines.forEach(function(l){ map.removeLayer(l); });
+  acMarkers = []; trackLines = [];
 
-  var records;
+  var acRecords, rawHist;
   try {
-    records = await fetchAllRecords();
+    document.getElementById('loading-label').textContent = 'Loading aircraft positions…';
+    acRecords = await fetchAllFromTable(AC_TABLE, [
+      F_NN, F_TITLE, F_MODEL, F_STATUS, F_AIRBORN, F_ICAO,
+      F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC,
+      F_SQUAWK, F_CS, F_ORIGIN, F_DEST, F_SEEN
+    ]);
+
+    document.getElementById('loading-label').textContent = 'Loading track history…';
+    rawHist = await fetchAllFromTable(HIST_TABLE, [HF_NN, HF_TS, HF_LAT, HF_LON, HF_FID]);
+    histRecords = rawHist;
   } catch(e) {
     document.getElementById('loading').innerHTML =
-      '<div class="error-box"><strong>Could not load aircraft data</strong><br><br>' + e.message + '</div>' +
-      '<button class="refresh-btn" style="margin-top:14px;" onclick="location.reload()">Try again</button>';
+      '<div class="error-box"><strong>Could not load data</strong><br><br>' + e.message +
+      '<br><br>Make sure your AIRTABLE_TOKEN is set at the top of the file.</div>' +
+      '<button class="btn" style="margin-top:14px;" onclick="location.reload()">Try again</button>';
     btn.disabled = false;
     return;
   }
 
-  var total = records.length;
-  var airborneCount = 0, plotted = 0;
+  // ── Build track history lookup: NN → sorted array of {lat, lon, ts} ──────
+  var histByNN = {};
+  rawHist.forEach(function(r) {
+    var linked = r.fields[HF_NN];
+    var nn = Array.isArray(linked) ? (linked[0] && linked[0].name) : (linked || '');
+    if (!nn) return;
+    var lat = parseFloat(r.fields[HF_LAT]);
+    var lon = parseFloat(r.fields[HF_LON]);
+    if (isNaN(lat) || isNaN(lon)) return;
+    if (!histByNN[nn]) histByNN[nn] = [];
+    histByNN[nn].push({ lat: lat, lon: lon, ts: r.fields[HF_TS] || '', id: r.id });
+  });
+  Object.keys(histByNN).forEach(function(nn) {
+    histByNN[nn].sort(function(a, b){ return a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0; });
+  });
+
+  // Assign colors to aircraft that have history
+  var ci = 0;
+  colorIndex = {};
+  Object.keys(histByNN).forEach(function(nn) {
+    colorIndex[nn] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
+  });
+  // Also assign colors for airborne aircraft not yet in history
+  acRecords.forEach(function(r) {
+    var nn = r.fields[F_NN] || '';
+    if (!colorIndex[nn]) colorIndex[nn] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
+  });
+
+  // ── Draw track history polylines ─────────────────────────────────────────
+  Object.keys(histByNN).forEach(function(nn) {
+    var pts = histByNN[nn];
+    if (pts.length < 2) return;
+    var latlngs = pts.map(function(p){ return [p.lat, p.lon]; });
+    var color = colorIndex[nn] || '#1a56db';
+    var line = L.polyline(latlngs, {
+      color: color, weight: 2.5, opacity: 0.65, dashArray: '6 4'
+    }).addTo(map);
+    trackLines.push(line);
+
+    // Small dots at each history point
+    pts.forEach(function(p) {
+      var dot = L.circleMarker([p.lat, p.lon], {
+        radius: 3, color: color, fillColor: color,
+        fillOpacity: 0.5, weight: 1, opacity: 0.7
+      }).addTo(map);
+      trackLines.push(dot);
+    });
+  });
+
+  // ── Plot current aircraft positions ──────────────────────────────────────
+  var total = acRecords.length, airborneCount = 0, plotted = 0;
   var bounds = [];
 
-  for (var i = 0; i < records.length; i++) {
-    var f = records[i].fields;
+  acRecords.forEach(function(r) {
+    var ff = r.fields;
+    var nn      = ff[F_NN]     || '';
+    var title   = ff[F_TITLE]  || nn;
+    var model   = ff[F_MODEL]  || '';
+    var status  = ff[F_STATUS] || '';
+    var airborn = ff[F_AIRBORN];
+    var icao    = ff[F_ICAO]   || '—';
+    var lat     = parseFloat(ff[F_LAT]);
+    var lon     = parseFloat(ff[F_LON]);
+    var alt     = ff[F_ALT]    || '—';
+    var gs      = ff[F_GS]     || '—';
+    var track   = ff[F_TRACK]  || '—';
+    var loc     = (ff[F_LOC] && typeof ff[F_LOC] === 'object') ? ff[F_LOC].name : (ff[F_LOC] || '—');
+    var squawk  = ff[F_SQUAWK] || '—';
+    var cs      = ff[F_CS]     || '';
+    var origin  = ff[F_ORIGIN] || '—';
+    var dest    = ff[F_DEST]   || '—';
+    var seen    = ff[F_SEEN]   || '—';
+    var histPts = histByNN[nn] ? histByNN[nn].length : 0;
 
-    var name   = f[F_NAME]   || 'Unknown';
-    var status = f[F_STATUS] || '';
-    var lat    = parseFloat(f[F_LAT]);
-    var lon    = parseFloat(f[F_LON]);
-    var alt    = f[F_ALT]    || '—';
-    var gs     = f[F_GS]     || '—';
-    var track  = f[F_TRACK]  || '—';
-    var loc    = (f[F_LOC] && typeof f[F_LOC] === 'object') ? f[F_LOC].name : (f[F_LOC] || '—');
-    var icao   = f[F_ICAO]   || '—';
-    var squawk = f[F_SQUAWK] || '—';
-
-    var isAirborne = (status !== '' && status !== 'On Ground');
+    var isAirborne = !!airborn;
     if (isAirborne) airborneCount++;
-    if (!isAirborne || isNaN(lat) || isNaN(lon)) continue;
+    if (!isAirborne || isNaN(lat) || isNaN(lon)) return;
 
-    var parts = name.split(' - ');
-    var tail  = parts[0] || name;
-    var model = parts.slice(1).join(' ') || '';
+    var parts = title.split(' - ');
+    var tail  = parts[0] || nn;
+    var mdl   = model || parts.slice(1).join(' ') || '';
+    var color = colorIndex[nn] || '#1a56db';
 
     var popup =
       '<div class="popup-inner">' +
-        '<div class="popup-tail">' + tail + '</div>' +
-        '<div class="popup-model">' + model + '</div>' +
-        '<div class="popup-badge"><span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>' + status + '</div>' +
+        '<div class="popup-tail">' + tail + (cs && cs !== nn ? ' · ' + cs : '') + '</div>' +
+        '<div class="popup-model">' + mdl + '</div>' +
+        '<div class="popup-badge">' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>' +
+          (status || 'Airborne') +
+        '</div>' +
         '<div class="popup-grid">' +
           '<div><div class="popup-lbl">Altitude</div><div class="popup-val">' + alt + '</div></div>' +
           '<div><div class="popup-lbl">Groundspeed</div><div class="popup-val">' + gs + '</div></div>' +
           '<div><div class="popup-lbl">Track</div><div class="popup-val">' + track + '</div></div>' +
-          '<div><div class="popup-lbl">Home</div><div class="popup-val">' + loc + '</div></div>' +
-          '<div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#6b7280;">' + icao + '</div></div>' +
           '<div><div class="popup-lbl">Squawk</div><div class="popup-val">' + squawk + '</div></div>' +
+          '<div><div class="popup-lbl">From</div><div class="popup-val">' + origin + '</div></div>' +
+          '<div><div class="popup-lbl">To</div><div class="popup-val">' + dest + '</div></div>' +
+          '<div><div class="popup-lbl">Last seen</div><div class="popup-val">' + seen + '</div></div>' +
+          '<div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#9ca3af;">' + icao + '</div></div>' +
+        '</div>' +
+        (histPts > 0
+          ? '<div class="popup-track-info">' + histPts + ' track point' + (histPts !== 1 ? 's' : '') + ' on file for this flight</div>'
+          : '') +
+        '<div class="popup-actions">' +
+          (icao !== '—'
+            ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B Exchange ↗</button>'
+            : '') +
+          '<button class="popup-btn popup-btn-land" onclick="confirmLanding(\'' + r.id + '\',\'' + nn + '\',' + histPts + ')">Mark landed + clear data</button>' +
         '</div>' +
       '</div>';
 
-    var marker = L.marker([lat, lon], { icon: planeIcon(track) })
-      .bindPopup(popup, { maxWidth: 260 })
+    var marker = L.marker([lat, lon], { icon: planeIcon(track, color) })
+      .bindPopup(popup, { maxWidth: 280 })
       .addTo(map);
-    markers.push(marker);
+    acMarkers.push(marker);
     bounds.push([lat, lon]);
     plotted++;
-  }
+  });
+
+  // Also add history bounds so map fits the whole track
+  Object.values(histByNN).forEach(function(pts) {
+    pts.forEach(function(p){ bounds.push([p.lat, p.lon]); });
+  });
 
   document.getElementById('stat-airborne').textContent = airborneCount;
   document.getElementById('stat-ground').textContent   = total - airborneCount;
+  document.getElementById('stat-pts').textContent      = rawHist.length;
   document.getElementById('stat-time').textContent     = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   if (bounds.length > 0) {
@@ -231,17 +402,83 @@ async function loadData() {
   }
 
   document.getElementById('statusbar').textContent = plotted > 0
-    ? plotted + ' aircraft plotted · ' + (airborneCount - plotted) + ' airborne without position · ' + (total - airborneCount) + ' on ground · Click any aircraft for details'
-    : 'No airborne aircraft with position data right now · ' + total + ' total aircraft in fleet';
+    ? plotted + ' airborne · ' + Object.keys(histByNN).length + ' aircraft with track history · ' + rawHist.length + ' total track points · Click aircraft for details'
+    : 'No airborne aircraft with position data · ' + total + ' total in fleet · ' + rawHist.length + ' track points stored';
 
   document.getElementById('loading').classList.add('hidden');
   btn.disabled = false;
 }
 
+// ─── CONFIRM + LAND ──────────────────────────────────────────────────────────
+function confirmLanding(recId, nn, histCount) {
+  document.getElementById('modal-title').textContent = 'Mark ' + nn + ' as landed?';
+  document.getElementById('modal-body').textContent =
+    'This will clear the Airborne Status, position, speed, altitude, and all flight fields on the Aircraft Data record' +
+    (histCount > 0
+      ? ' and permanently delete ' + histCount + ' track history point' + (histCount !== 1 ? 's' : '') + ' from Aircraft Track History.'
+      : '.');
+  document.getElementById('modal-confirm').onclick = function() { doLanding(recId, nn); };
+  document.getElementById('confirm-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').classList.remove('show');
+}
+
+async function doLanding(recId, nn) {
+  closeModal();
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('loading-label').textContent = 'Clearing data for ' + nn + '…';
+
+  try {
+    // 1. Clear live fields on Aircraft Data
+    var clearFields = {};
+    clearFields[FID_AIRBORN] = false;
+    clearFields[FID_CS]      = '';
+    clearFields[FID_ORIGIN]  = '';
+    clearFields[FID_DEST]    = '';
+    clearFields[FID_STATUS]  = '';
+    clearFields[FID_EMERG]   = '';
+    clearFields[FID_LATRAW]  = '';
+    clearFields[FID_LONRAW]  = '';
+    clearFields[FID_SQUAWK]  = '';
+    clearFields[FID_SEEN]    = '';
+    clearFields[FID_GSRAW]   = 0;
+    clearFields[FID_ALTRAW]  = 0;
+    clearFields[FID_TRKRAW]  = 0;
+    clearFields[FID_VSIRAW]  = 0;
+    await patchRecord(AC_TABLE, recId, clearFields);
+
+    // 2. Delete all track history rows for this aircraft
+    var toDelete = histRecords.filter(function(r) {
+      var linked = r.fields[HF_NN];
+      var n = Array.isArray(linked) ? (linked[0] && linked[0].name) : (linked || '');
+      return n === nn;
+    }).map(function(r){ return r.id; });
+
+    if (toDelete.length > 0) {
+      document.getElementById('loading-label').textContent = 'Deleting ' + toDelete.length + ' track points…';
+      await deleteRecords(HIST_TABLE, toDelete);
+    }
+
+    // Reload fresh data
+    await loadData();
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      '<div class="error-box"><strong>Error clearing data</strong><br><br>' + e.message + '</div>' +
+      '<button class="btn" style="margin-top:14px;" onclick="location.reload()">Reload</button>';
+  }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function openADSB(icao) {
+  window.open('https://globe.adsbexchange.com/?icao=' + icao, '_blank');
+}
+
+// ─── START ───────────────────────────────────────────────────────────────────
 initMap();
 loadData();
-
-setInterval(loadData, 60000);
+setInterval(loadData, 60000); // auto-refresh every 60 seconds
 </script>
 </body>
 </html>
