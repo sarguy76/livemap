@@ -8,145 +8,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    height: 100%;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    background: #f4f5f7;
-    color: #1a1a2e;
-    overflow: hidden;
-  }
-
+  html, body { height: 100%; font-family: 'Inter', sans-serif; font-size: 13px; background: #f4f5f7; color: #1a1a2e; overflow: hidden; }
   #app { display: flex; flex-direction: column; height: 100vh; }
-
-  #header {
-    background: #ffffff;
-    border-bottom: 1px solid #e2e5ea;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    gap: 12px;
-  }
-
+  #header { background: #ffffff; border-bottom: 1px solid #e2e5ea; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; }
   .brand { display: flex; align-items: center; gap: 9px; }
-
-  .brand-icon {
-    width: 32px; height: 32px;
-    background: #1a56db;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-
+  .brand-icon { width: 32px; height: 32px; background: #1a56db; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .brand-icon svg { width: 18px; height: 18px; }
   .brand-name { font-size: 14px; font-weight: 600; color: #111827; }
   .brand-sub  { font-size: 11px; color: #6b7280; margin-top: 1px; }
-
   .stats { display: flex; gap: 8px; align-items: center; }
-
-  .stat {
-    display: flex; align-items: center; gap: 6px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    padding: 4px 12px;
-  }
-
+  .stat { display: flex; align-items: center; gap: 6px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px; padding: 4px 12px; }
   .stat-dot { width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; }
-  .stat-dot.live {
-    background: #16a34a;
-    box-shadow: 0 0 0 3px rgba(22,163,74,0.2);
-    animation: livepulse 2s infinite;
-  }
-
-  @keyframes livepulse {
-    0%, 100% { box-shadow: 0 0 0 3px rgba(22,163,74,0.2); }
-    50%       { box-shadow: 0 0 0 5px rgba(22,163,74,0.05); }
-  }
-
+  .stat-dot.live { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); animation: livepulse 2s infinite; }
+  @keyframes livepulse { 0%, 100% { box-shadow: 0 0 0 3px rgba(22,163,74,0.2); } 50% { box-shadow: 0 0 0 5px rgba(22,163,74,0.05); } }
   .stat-text { font-size: 12px; font-weight: 500; color: #374151; }
   .stat-text strong { color: #111827; }
-
-  .refresh-btn {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px; font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background: #fff; color: #374151;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    flex-shrink: 0;
-  }
-  .refresh-btn:hover    { background: #f9fafb; border-color: #9ca3af; }
+  .refresh-btn { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; transition: background 0.15s, border-color 0.15s; flex-shrink: 0; }
+  .refresh-btn:hover { background: #f9fafb; border-color: #9ca3af; }
   .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
   #map { flex: 1; width: 100%; }
-
-  #statusbar {
-    background: #fff;
-    border-top: 1px solid #e2e5ea;
-    padding: 5px 16px;
-    font-size: 11px; color: #6b7280;
-    flex-shrink: 0;
-  }
-
-  .leaflet-popup-content-wrapper {
-    border-radius: 10px !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
-    border: 1px solid #e5e7eb !important;
-    padding: 0 !important;
-  }
+  #statusbar { background: #fff; border-top: 1px solid #e2e5ea; padding: 5px 16px; font-size: 11px; color: #6b7280; flex-shrink: 0; }
+  .leaflet-popup-content-wrapper { border-radius: 10px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important; border: 1px solid #e5e7eb !important; padding: 0 !important; }
   .leaflet-popup-content { margin: 0 !important; }
-
-  .popup-inner  { padding: 12px 14px; min-width: 210px; }
-  .popup-tail   { font-size: 14px; font-weight: 600; color: #111827; }
-  .popup-model  { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
-  .popup-badge  {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: #dcfce7; color: #15803d;
-    border-radius: 4px; padding: 2px 8px;
-    font-size: 11px; font-weight: 500; margin-bottom: 10px;
-  }
-  .popup-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .popup-lbl    { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 1px; }
-  .popup-val    { font-size: 12px; font-weight: 500; color: #1f2937; }
-
-  #loading {
-    position: fixed; inset: 0;
-    background: rgba(255,255,255,0.92);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 9999; gap: 12px;
-    transition: opacity 0.3s;
-  }
+  .popup-inner { padding: 12px 14px; min-width: 210px; }
+  .popup-tail  { font-size: 14px; font-weight: 600; color: #111827; }
+  .popup-model { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+  .popup-badge { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; margin-bottom: 10px; }
+  .popup-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .popup-lbl   { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 1px; }
+  .popup-val   { font-size: 12px; font-weight: 500; color: #1f2937; }
+  #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 12px; transition: opacity 0.3s; }
   #loading.hidden { opacity: 0; pointer-events: none; }
-
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid #e5e7eb;
-    border-top-color: #1a56db;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
+  .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #1a56db; border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .loading-label { font-size: 13px; color: #6b7280; }
-
-  .error-box {
-    background: #fef2f2; border: 1px solid #fecaca;
-    border-radius: 8px; padding: 14px 18px;
-    color: #991b1b; font-size: 12px;
-    max-width: 360px; text-align: center; line-height: 1.6;
-  }
+  .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 18px; color: #991b1b; font-size: 12px; max-width: 360px; text-align: center; line-height: 1.6; }
 </style>
 </head>
 <body>
 <div id="app">
-
   <div id="header">
     <div class="brand">
       <div class="brand-icon">
@@ -159,7 +59,6 @@
         <div class="brand-sub">Operations Dashboard</div>
       </div>
     </div>
-
     <div class="stats">
       <div class="stat">
         <div class="stat-dot live"></div>
@@ -173,13 +72,10 @@
         <div class="stat-text" style="color:#9ca3af;">Updated <strong id="stat-time" style="color:#6b7280;">—</strong></div>
       </div>
     </div>
-
     <button class="refresh-btn" id="refresh-btn" onclick="loadData()">↺ Refresh</button>
   </div>
-
   <div id="map"></div>
   <div id="statusbar">Initializing…</div>
-
 </div>
 
 <div id="loading">
@@ -190,21 +86,20 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────────────────
-const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.849e8446b84ea69a5bc217dfb2cd456a437749106c72f38c8dbbcc272159987e'; // ← Paste your Personal Access Token here
+const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.c7311dde2cbd58702f9bc62d70cdd70b40f76e1309fe44d715713456bb64ec53'; // ← Replace with your new PAT after revoking the old one
 const BASE_ID        = 'appPnZ5jc99OYswdm';
 const TABLE_ID       = 'tbl9GsDvW3Vwu6dTX';
 
-const F = {
-  name:   'fldyAYvlYnlNuxSha',
-  status: 'fldyz0juOgCZDT2F7',
-  icao:   'fldrUpXc5xreQ8SiT',
-  lat:    'fld1hswtb3GecHZ0L',
-  lon:    'fldf7EcM8Se73lNzc',
-  alt:    'fldQPgJtwvgnvlnap',
-  gs:     'fldpsOgryhNNfZUeN',
-  track:  'fldqIjmQG5avvzYJZ',
-  loc:    'fldZA8MdAaEsc0k3Q',
-};
+// Field IDs from the aircraft table
+const F_NAME   = 'fldyAYvlYnlNuxSha';
+const F_STATUS = 'fldyz0juOgCZDT2F7';
+const F_ICAO   = 'fldrUpXc5xreQ8SiT';
+const F_LAT    = 'fld1hswtb3GecHZ0L';
+const F_LON    = 'fldf7EcM8Se73lNzc';
+const F_ALT    = 'fldQPgJtwvgnvlnap';
+const F_GS     = 'fldpsOgryhNNfZUeN';
+const F_TRACK  = 'fldqIjmQG5avvzYJZ';
+const F_LOC    = 'fldZA8MdAaEsc0k3Q';
 // ───────────────────────────────────────────────────────────────────
 
 let map, markers = [];
@@ -220,13 +115,7 @@ function initMap() {
 function planeIcon(trackStr) {
   const deg = parseFloat((String(trackStr || '0').match(/(\d+(\.\d+)?)/)||['0','0'])[1]) || 0;
   return L.divIcon({
-    html: `<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg);">
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="#1a56db" stroke-width="1.5"/>
-        <path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="#1a56db"/>
-        <circle cx="18" cy="18" r="2.5" fill="white"/>
-      </svg>
-    </div>`,
+    html: '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate(' + deg + 'deg);"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="#1a56db" stroke-width="1.5"/><path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="#1a56db"/><circle cx="18" cy="18" r="2.5" fill="white"/></svg></div>',
     className: '',
     iconSize: [36, 36],
     iconAnchor: [18, 18],
@@ -235,18 +124,26 @@ function planeIcon(trackStr) {
 }
 
 async function fetchAllRecords() {
-  const fieldList = Object.values(F).map(id => `fields[]=${encodeURIComponent(id)}`).join('&');
-  let records = [], offset = null;
+  // Build URL with fields[] params — do NOT encode the brackets, Airtable requires literal []
+  const fieldIds = [F_NAME, F_STATUS, F_ICAO, F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC];
+  const fieldParams = fieldIds.map(id => 'fields[]=' + id).join('&');
+
+  let records = [];
+  let offset = null;
 
   do {
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?${fieldList}&pageSize=100${offset ? `&offset=${encodeURIComponent(offset)}` : ''}`;
+    let url = 'https://api.airtable.com/v0/' + BASE_ID + '/' + TABLE_ID + '?' + fieldParams + '&pageSize=100';
+    if (offset) url += '&offset=' + encodeURIComponent(offset);
+
     const resp = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
+      headers: { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN }
     });
+
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `Airtable returned HTTP ${resp.status}`);
+      const err = await resp.json().catch(function() { return {}; });
+      throw new Error((err && err.error && err.error.message) || ('Airtable returned HTTP ' + resp.status));
     }
+
     const data = await resp.json();
     records = records.concat(data.records || []);
     offset = data.offset || null;
@@ -261,20 +158,16 @@ async function loadData() {
   document.getElementById('loading').classList.remove('hidden');
   document.getElementById('loading-label').textContent = 'Fetching aircraft data…';
 
-  markers.forEach(m => map.removeLayer(m));
+  markers.forEach(function(m) { map.removeLayer(m); });
   markers = [];
 
   let records;
   try {
     records = await fetchAllRecords();
   } catch(e) {
-    document.getElementById('loading').innerHTML = `
-      <div class="error-box">
-        <strong>Could not load aircraft data</strong><br><br>
-        ${e.message}<br><br>
-        Check that your Airtable Personal Access Token is correctly set in the HTML file.
-      </div>
-      <button class="refresh-btn" style="margin-top:14px;" onclick="location.reload()">Try again</button>`;
+    document.getElementById('loading').innerHTML =
+      '<div class="error-box"><strong>Could not load aircraft data</strong><br><br>' + e.message + '<br><br>Check that your Airtable Personal Access Token is correctly set in the HTML file.</div>' +
+      '<button class="refresh-btn" style="margin-top:14px;" onclick="location.reload()">Try again</button>';
     btn.disabled = false;
     return;
   }
@@ -283,19 +176,20 @@ async function loadData() {
   let airborneCount = 0, plotted = 0;
   const bounds = [];
 
-  for (const rec of records) {
-    const f = rec.fields;
-    const name   = f[F.name]   || 'Unknown';
-    const status = f[F.status] || '';
-    const lat    = parseFloat(f[F.lat]);
-    const lon    = parseFloat(f[F.lon]);
-    const alt    = f[F.alt]    || '—';
-    const gs     = f[F.gs]     || '—';
-    const track  = f[F.track]  || '—';
-    const loc    = (f[F.loc] && typeof f[F.loc] === 'object') ? f[F.loc].name : (f[F.loc] || '—');
-    const icao   = f[F.icao]   || '—';
+  for (var i = 0; i < records.length; i++) {
+    const f = records[i].fields;
 
-    const isAirborne = status !== '' && status !== 'On Ground';
+    const name   = f[F_NAME]   || 'Unknown';
+    const status = f[F_STATUS] || '';
+    const lat    = parseFloat(f[F_LAT]);
+    const lon    = parseFloat(f[F_LON]);
+    const alt    = f[F_ALT]    || '—';
+    const gs     = f[F_GS]     || '—';
+    const track  = f[F_TRACK]  || '—';
+    const loc    = (f[F_LOC] && typeof f[F_LOC] === 'object') ? f[F_LOC].name : (f[F_LOC] || '—');
+    const icao   = f[F_ICAO]   || '—';
+
+    const isAirborne = (status !== '' && status !== 'On Ground');
     if (isAirborne) airborneCount++;
     if (!isAirborne || isNaN(lat) || isNaN(lon)) continue;
 
@@ -303,22 +197,19 @@ async function loadData() {
     const tail  = parts[0] || name;
     const model = parts.slice(1).join(' ') || '';
 
-    const popup = `
-      <div class="popup-inner">
-        <div class="popup-tail">${tail}</div>
-        <div class="popup-model">${model}</div>
-        <div class="popup-badge">
-          <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>
-          ${status}
-        </div>
-        <div class="popup-grid">
-          <div><div class="popup-lbl">Altitude</div><div class="popup-val">${alt}</div></div>
-          <div><div class="popup-lbl">Groundspeed</div><div class="popup-val">${gs}</div></div>
-          <div><div class="popup-lbl">Track</div><div class="popup-val">${track}</div></div>
-          <div><div class="popup-lbl">Home</div><div class="popup-val">${loc}</div></div>
-          <div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#6b7280;">${icao}</div></div>
-        </div>
-      </div>`;
+    const popup =
+      '<div class="popup-inner">' +
+        '<div class="popup-tail">' + tail + '</div>' +
+        '<div class="popup-model">' + model + '</div>' +
+        '<div class="popup-badge"><span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>' + status + '</div>' +
+        '<div class="popup-grid">' +
+          '<div><div class="popup-lbl">Altitude</div><div class="popup-val">' + alt + '</div></div>' +
+          '<div><div class="popup-lbl">Groundspeed</div><div class="popup-val">' + gs + '</div></div>' +
+          '<div><div class="popup-lbl">Track</div><div class="popup-val">' + track + '</div></div>' +
+          '<div><div class="popup-lbl">Home</div><div class="popup-val">' + loc + '</div></div>' +
+          '<div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#6b7280;">' + icao + '</div></div>' +
+        '</div>' +
+      '</div>';
 
     const marker = L.marker([lat, lon], { icon: planeIcon(track) })
       .bindPopup(popup, { maxWidth: 260 })
@@ -337,8 +228,8 @@ async function loadData() {
   }
 
   document.getElementById('statusbar').textContent = plotted > 0
-    ? `${plotted} aircraft plotted · ${airborneCount - plotted} airborne without position data · ${total - airborneCount} on ground · Click any aircraft for details`
-    : `No airborne aircraft with position data right now · ${total} total aircraft in fleet`;
+    ? plotted + ' aircraft plotted · ' + (airborneCount - plotted) + ' airborne without position · ' + (total - airborneCount) + ' on ground · Click any aircraft for details'
+    : 'No airborne aircraft with position data right now · ' + total + ' total aircraft in fleet';
 
   document.getElementById('loading').classList.add('hidden');
   btn.disabled = false;
