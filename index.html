@@ -86,7 +86,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ─── CONFIGURATION ──────────────────────────────────────────────────
-const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.c7311dde2cbd58702f9bc62d70cdd70b40f76e1309fe44d715713456bb64ec53'; // ← Replace with your PAT
+const AIRTABLE_TOKEN = 'atgkv5RrBFKkceOU.c7311dde2cbd58702f9bc62d70cdd70b40f76e1309fe44d715713456bb64ec53'; // ← Replace with your PAT
 const BASE_ID        = 'appPnZ5jc99OYswdm';
 const TABLE_ID       = 'tbl9GsDvW3Vwu6dTX';
 // ────────────────────────────────────────────────────────────────────
@@ -101,6 +101,7 @@ const F_ALT    = 'Altitude';
 const F_GS     = 'Groundspeed';
 const F_TRACK  = 'Track';
 const F_LOC    = 'Aircraft Location';
+const F_SQUAWK = 'Current Squawk';
 
 let map, markers = [];
 
@@ -125,7 +126,7 @@ function planeIcon(trackStr) {
 
 async function fetchAllRecords() {
   // Request fields by name — Airtable returns them by name in the response
-  var fieldNames = [F_NAME, F_STATUS, F_ICAO, F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC];
+  var fieldNames = [F_NAME, F_STATUS, F_ICAO, F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC, F_SQUAWK];
   var fieldParams = fieldNames.map(function(n) { return 'fields[]=' + encodeURIComponent(n); }).join('&');
 
   var records = [];
@@ -188,6 +189,7 @@ async function loadData() {
     var track  = f[F_TRACK]  || '—';
     var loc    = (f[F_LOC] && typeof f[F_LOC] === 'object') ? f[F_LOC].name : (f[F_LOC] || '—');
     var icao   = f[F_ICAO]   || '—';
+    var squawk = f[F_SQUAWK] || '—';
 
     var isAirborne = (status !== '' && status !== 'On Ground');
     if (isAirborne) airborneCount++;
@@ -208,6 +210,7 @@ async function loadData() {
           '<div><div class="popup-lbl">Track</div><div class="popup-val">' + track + '</div></div>' +
           '<div><div class="popup-lbl">Home</div><div class="popup-val">' + loc + '</div></div>' +
           '<div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#6b7280;">' + icao + '</div></div>' +
+          '<div><div class="popup-lbl">Squawk</div><div class="popup-val">' + squawk + '</div></div>' +
         '</div>' +
       '</div>';
 
