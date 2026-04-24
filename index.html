@@ -43,8 +43,8 @@
   .popup-lbl   { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 1px; }
   .popup-val   { font-size: 12px; font-weight: 500; color: #1f2937; }
   .popup-track-info { font-size: 11px; color: #6b7280; margin-bottom: 10px; padding: 6px 8px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb; }
-  .popup-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-  .popup-btn { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
+  .popup-actions { display: flex; flex-direction: column; gap: 6px; }
+  .popup-btn { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; flex: 1; }
   .popup-btn:hover { background: #f9fafb; }
   .popup-btn-land { border-color: #fca5a5; color: #b91c1c; }
   .popup-btn-land:hover { background: #fef2f2; }
@@ -485,14 +485,16 @@ async function loadData() {
           ? '<div class="popup-track-info">' + histPts + ' track point' + (histPts !== 1 ? 's' : '') + ' recorded</div>'
           : '') +
         '<div class="popup-actions">' +
+          '<div style="display:flex;gap:6px;margin-bottom:6px;width:100%;">' +
+            (icao !== '—'
+              ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B ↗</button>'
+              : '<div style="flex:1;"></div>') +
+            (flightAware
+              ? '<button class="popup-btn" onclick="window.open(\'' + flightAware + '\',\'_blank\')">FlightAware ↗</button>'
+              : '<div style="flex:1;"></div>') +
+          '</div>' +
           (histPts > 0
-            ? '<button class="popup-btn" onclick="toggleTrackFromPopup(\'' + nn + '\')">Show Track ▼</button>'
-            : '') +
-          (icao !== '—'
-            ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B ↗</button>'
-            : '') +
-          (flightAware
-            ? '<button class="popup-btn" onclick="window.open(\'' + flightAware + '\',\'_blank\')">FlightAware ↗</button>'
+            ? '<button class="popup-btn" onclick="toggleTrackFromPopup(\'' + nn + '\')" style="width:100%;">Show Track ▼</button>'
             : '') +
         '</div>' +
       '</div>';
