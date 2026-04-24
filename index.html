@@ -239,12 +239,12 @@ async function atFetch(path, opts) {
   return resp.json();
 }
 
-async function fetchAllFromTable(tableId, fieldNames, useCellFormat) {
+async function fetchAllFromTable(tableId, fieldNames, expandLinks) {
   var params = fieldNames.map(function(n){ return 'fields[]=' + encodeURIComponent(n); }).join('&');
   var records = [], offset = null;
   do {
     var url = '/' + tableId + '?' + params + '&pageSize=100';
-    if (useCellFormat) url += '&cellFormat=string';
+    if (expandLinks) url += '&cellFormat=json';
     if (offset) url += '&offset=' + encodeURIComponent(offset);
     var data = await atFetch(url);
     records = records.concat(data.records || []);
@@ -308,18 +308,25 @@ async function loadData() {
     var linked = r.fields[HF_NN];
     var nn = '';
     
-    // With cellFormat=string, linked records come back as strings (e.g., "N734VX")
-    // or arrays of strings for multiple links
-    if (typeof linked === 'string') {
-      nn = linked.trim();
-    } else if (Array.isArray(linked)) {
+    // With cellFormat=json, linked records come back as objects with expanded data
+    if (Array.isArray(linked)) {
+      // Array of linked records
       if (linked.length > 0) {
-        nn = String(linked[0]).trim();
+        var firstLink = linked[0];
+        if (typeof firstLink === 'object' && firstLink.fields) {
+          nn = firstLink.fields['N-Number'] || '';
+        } else if (typeof firstLink === 'string') {
+          nn = firstLink;
+        }
       }
-    } else if (linked && typeof linked === 'object') {
-      nn = (linked.name || '').trim();
+    } else if (linked && typeof linked === 'object' && linked.fields) {
+      // Single linked record object
+      nn = linked.fields['N-Number'] || '';
+    } else if (typeof linked === 'string') {
+      nn = linked;
     }
     
+    nn = nn.trim();
     if (!nn) return;
     
     var lat = parseFloat(r.fields[HF_LAT]);
