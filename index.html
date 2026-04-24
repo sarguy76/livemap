@@ -471,6 +471,9 @@ async function loadData() {
           ? '<div class="popup-track-info">' + histPts + ' track point' + (histPts !== 1 ? 's' : '') + ' recorded</div>'
           : '') +
         '<div class="popup-actions">' +
+          (histPts > 0
+            ? '<button class="popup-btn" onclick="toggleTrackFromPopup(\'' + nn + '\')">Show Track ▼</button>'
+            : '') +
           (icao !== '—'
             ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B ↗</button>'
             : '') +
@@ -484,10 +487,9 @@ async function loadData() {
       .bindPopup(popup, { maxWidth: 280 })
       .addTo(map);
     
-    // Add click event to show/hide track history
-    marker.on('click', function() {
-      toggleAircraftTrack(nn, tracksByAircraft[nn]);
-    });
+    // Store aircraft N-Number on the marker for later reference
+    marker.aircraftNN = nn;
+    marker.trackElements = tracksByAircraft[nn];
     
     acMarkers.push(marker);
     bounds.push([lat, lon]);
@@ -526,6 +528,19 @@ async function loadData() {
 }
 
 // ─── TOGGLE AIRCRAFT TRACK VISIBILITY ────────────────────────────────────────
+function toggleTrackFromPopup(aircraftNN) {
+  if (!tracksByAircraft[aircraftNN]) return;
+  toggleAircraftTrack(aircraftNN, tracksByAircraft[aircraftNN]);
+  
+  // Update the button text
+  var btn = event.target;
+  if (visibleTracks[aircraftNN]) {
+    btn.textContent = 'Hide Track ▲';
+  } else {
+    btn.textContent = 'Show Track ▼';
+  }
+}
+
 function toggleAircraftTrack(aircraftNN, trackElements) {
   if (!trackElements || trackElements.length === 0) return;
   
