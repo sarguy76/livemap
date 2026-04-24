@@ -193,7 +193,7 @@ function initMap() {
 }
 
 // ─── AIRCRAFT ICON ───────────────────────────────────────────────────────────
-function planeIcon(trackStr, color, photoUrl) {
+function planeIcon(trackStr, color, photoUrl, nNumber) {
   var deg = 0;
   if (trackStr) {
     var m = String(trackStr).match(/(\d+(\.\d+)?)/);
@@ -218,12 +218,15 @@ function planeIcon(trackStr, color, photoUrl) {
                '</svg></div>';
   }
   
+  // Add N-Number label below the icon
+  var label = nNumber ? '<div style="font-size:10px;font-weight:600;color:'+c+';text-align:center;margin-top:2px;white-space:nowrap;background:rgba(255,255,255,0.9);padding:1px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.2);">'+nNumber+'</div>' : '';
+  
   return L.divIcon({
-    html: iconHtml,
+    html: '<div style="display:flex;flex-direction:column;align-items:center;">'+iconHtml+label+'</div>',
     className: '',
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -20]
+    iconSize: [52, 52],
+    iconAnchor: [26, 35],
+    popupAnchor: [0, -35]
   });
 }
 
@@ -494,7 +497,7 @@ async function loadData() {
         '</div>' +
       '</div>';
 
-    var marker = L.marker([lat, lon], { icon: planeIcon(track, color, photoUrl) })
+    var marker = L.marker([lat, lon], { icon: planeIcon(track, color, photoUrl, nn) })
       .bindPopup(popup, { maxWidth: 280 })
       .addTo(map);
     
