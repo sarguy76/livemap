@@ -149,6 +149,8 @@ const F_CS      = 'Current Callsign';
 const F_ORIGIN  = 'Origin ICAO';
 const F_DEST    = 'Destination ICAO';
 const F_SEEN    = 'Last Seen (sec ago)';
+const F_PHOTO   = 'Photo - Profile';
+const F_FLIGHTAWARE = 'FlightAware';
 
 // Aircraft Data field IDs (for PATCH updates)
 const FID_AIRBORN = 'fld443YjcAFlV4GNa';
@@ -189,20 +191,31 @@ function initMap() {
 }
 
 // ─── AIRCRAFT ICON ───────────────────────────────────────────────────────────
-function planeIcon(trackStr, color) {
+function planeIcon(trackStr, color, photoUrl) {
   var deg = 0;
   if (trackStr) {
     var m = String(trackStr).match(/(\d+(\.\d+)?)/);
     if (m) deg = parseFloat(m[1]) || 0;
   }
   var c = color || '#1a56db';
+  
+  // If photo URL exists, use it as background; otherwise use default SVG
+  var iconHtml = '';
+  if (photoUrl) {
+    iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
+               '<img src="' + photoUrl + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid '+c+';box-shadow:0 2px 8px rgba(0,0,0,0.3);" />' +
+               '</div>';
+  } else {
+    iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
+               '<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+               '<circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="'+c+'" stroke-width="1.5"/>' +
+               '<path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="'+c+'"/>' +
+               '<circle cx="18" cy="18" r="2.5" fill="white"/>' +
+               '</svg></div>';
+  }
+  
   return L.divIcon({
-    html: '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
-          '<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-          '<circle cx="18" cy="18" r="16" fill="rgba(26,86,219,0.12)" stroke="'+c+'" stroke-width="1.5"/>' +
-          '<path d="M18 5 L21.5 17 L31 18 L21.5 19 L18 31 L14.5 19 L5 18 L14.5 17 Z" fill="'+c+'"/>' +
-          '<circle cx="18" cy="18" r="2.5" fill="white"/>' +
-          '</svg></div>',
+    html: iconHtml,
     className: '',
     iconSize: [36, 36],
     iconAnchor: [18, 18],
@@ -268,7 +281,7 @@ async function loadData() {
     acRecords = await fetchAllFromTable(AC_TABLE, [
       F_NN, F_TITLE, F_MODEL, F_STATUS, F_AIRBORN, F_ICAO,
       F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC,
-      F_SQUAWK, F_CS, F_ORIGIN, F_DEST, F_SEEN
+      F_SQUAWK, F_CS, F_ORIGIN, F_DEST, F_SEEN, F_PHOTO, F_FLIGHTAWARE
     ]);
 
     document.getElementById('loading-label').textContent = 'Loading track history…';
