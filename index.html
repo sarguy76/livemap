@@ -239,11 +239,12 @@ async function atFetch(path, opts) {
   return resp.json();
 }
 
-async function fetchAllFromTable(tableId, fieldNames) {
+async function fetchAllFromTable(tableId, fieldNames, useCellFormat) {
   var params = fieldNames.map(function(n){ return 'fields[]=' + encodeURIComponent(n); }).join('&');
   var records = [], offset = null;
   do {
-    var url = '/' + tableId + '?' + params + '&pageSize=100&cellFormat=string';
+    var url = '/' + tableId + '?' + params + '&pageSize=100';
+    if (useCellFormat) url += '&cellFormat=string';
     if (offset) url += '&offset=' + encodeURIComponent(offset);
     var data = await atFetch(url);
     records = records.concat(data.records || []);
@@ -286,10 +287,10 @@ async function loadData() {
       F_NN, F_TITLE, F_MODEL, F_STATUS, F_AIRBORN, F_ICAO,
       F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC,
       F_SQUAWK, F_CS, F_ORIGIN, F_DEST, F_SEEN, F_PHOTO, F_FLIGHTAWARE
-    ]);
+    ], false);  // Don't use cellFormat for aircraft table
 
     document.getElementById('loading-label').textContent = 'Loading track history…';
-    rawHist = await fetchAllFromTable(HIST_TABLE, [HF_NN, HF_TS, HF_LAT, HF_LON, HF_FID]);
+    rawHist = await fetchAllFromTable(HIST_TABLE, [HF_NN, HF_TS, HF_LAT, HF_LON, HF_FID], true);  // Use cellFormat for track history
     histRecords = rawHist;
   } catch(e) {
     document.getElementById('loading').innerHTML =
