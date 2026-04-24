@@ -202,8 +202,10 @@ function planeIcon(trackStr, color, photoUrl) {
   // If photo URL exists, use it as background; otherwise use default SVG
   var iconHtml = '';
   if (photoUrl) {
-    iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
+    // Photo stays upright (no rotation), arrow rotates to show direction
+    iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;position:relative;">' +
                '<img src="' + photoUrl + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid '+c+';box-shadow:0 2px 8px rgba(0,0,0,0.3);" />' +
+               '<div style="position:absolute;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid '+c+';transform:rotate('+deg+'deg);bottom:2px;opacity:0.9;"></div>' +
                '</div>';
   } else {
     iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
@@ -298,16 +300,37 @@ async function loadData() {
 
   // ── Build track history lookup: NN → sorted array of {lat, lon, ts, id} ─
   var histByNN = {};
+  var debugNN = []; // Debug: track what N-Numbers we're finding
   rawHist.forEach(function(r) {
     var linked = r.fields[HF_NN];
-    var nn = Array.isArray(linked) ? (linked[0] && linked[0].name) : (linked || '');
+    var nn = '';
+    
+    // Handle different link formats: array of objects, single object, or string
+    if (Array.isArray(linked)) {
+      if (linked.length > 0) {
+        nn = linked[0].name || linked[0] || '';
+      }
+    } else if (linked && typeof linked === 'object') {
+      nn = linked.name || '';
+    } else if (linked) {
+      nn = String(linked);
+    }
+    
     if (!nn) return;
+    
     var lat = parseFloat(r.fields[HF_LAT]);
     var lon = parseFloat(r.fields[HF_LON]);
     if (isNaN(lat) || isNaN(lon)) return;
     if (!histByNN[nn]) histByNN[nn] = [];
     histByNN[nn].push({ lat: lat, lon: lon, ts: r.fields[HF_TS] || '', id: r.id });
+    
+    if (debugNN.indexOf(nn) === -1) debugNN.push(nn);
   });
+  
+  // Debug: log what we found
+  console.log('Track history N-Numbers found:', debugNN);
+  console.log('Total track records:', rawHist.length);
+  console.log('Aircraft with track data:', Object.keys(histByNN).length);
   
   // Sort each aircraft's history by timestamp (oldest first)
   Object.keys(histByNN).forEach(function(nn) {
@@ -320,10 +343,18 @@ async function loadData() {
   Object.keys(histByNN).forEach(function(nn) {
     colorIndex[nn] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
   });
+  
+  // Debug: log aircraft N-Numbers
+  var aircraftNN = [];
   acRecords.forEach(function(r) {
     var nn = r.fields[F_NN] || '';
+    if (nn) aircraftNN.push(nn);
     if (!colorIndex[nn]) colorIndex[nn] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
   });
+  console.log('Aircraft N-Numbers:', aircraftNN);
+  console.log('Mismatch check - track history keys:', Object.keys(histByNN));
+  console.log('Possible N-Number mismatches (in history but not in aircraft):', 
+    Object.keys(histByNN).filter(function(nn) { return aircraftNN.indexOf(nn) === -1; }));
 
   // ── Draw track history polylines ─────────────────────────────────────────
   Object.keys(histByNN).forEach(function(nn) {
@@ -467,9 +498,10 @@ async function loadData() {
     .map(function(m) { return modelCounts[m] + ' ' + m; })
     .join(', ');
   
+  var aircraftWithHistory = Object.keys(histByNN).length;
   document.getElementById('statusbar').textContent = plotted > 0
-    ? plotted + ' airborne (' + modelStr + ') · ' + Object.keys(histByNN).length + ' aircraft with track history · ' + rawHist.length + ' total track points · Click aircraft for details'
-    : 'No airborne aircraft with position data · ' + total + ' total in fleet · ' + rawHist.length + ' track points stored';
+    ? plotted + ' airborne (' + modelStr + ') · ' + aircraftWithHistory + ' aircraft with track history (' + rawHist.length + ' points) · Click aircraft for details'
+    : 'No airborne aircraft with position data · ' + total + ' total in fleet · ' + aircraftWithHistory + ' aircraft with track history (' + rawHist.length + ' points)';
 
   document.getElementById('loading').classList.add('hidden');
   btn.disabled = false;
