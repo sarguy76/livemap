@@ -180,6 +180,8 @@ const TRACK_COLORS = ['#1a56db','#c0392b','#7f56da','#0e9f6e','#c27803','#d45087
 let colorIndex = {};
 
 let map, acMarkers = [], trackLines = [], histRecords = [], refreshTimer = null;
+let visibleTracks = {}; // Track which aircraft's track history is currently visible
+let tracksByAircraft = {}; // Store track elements per aircraft N-Number (global)
 
 // ─── MAP INIT ────────────────────────────────────────────────────────────────
 function initMap() {
@@ -202,10 +204,10 @@ function planeIcon(trackStr, color, photoUrl) {
   // If photo URL exists, use it as background; otherwise use default SVG
   var iconHtml = '';
   if (photoUrl) {
-    // Photo stays upright (no rotation), arrow rotates to show direction
+    // Photo stays upright (no rotation), arrow rotates to show direction at outer edge
     iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;position:relative;">' +
                '<img src="' + photoUrl + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid '+c+';box-shadow:0 2px 8px rgba(0,0,0,0.3);" />' +
-               '<div style="position:absolute;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid '+c+';transform:rotate('+deg+'deg);bottom:2px;opacity:0.9;"></div>' +
+               '<div style="position:absolute;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:10px solid '+c+';transform:rotate('+deg+'deg) translateY(-22px);opacity:0.95;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));"></div>' +
                '</div>';
   } else {
     iconHtml = '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
@@ -356,7 +358,10 @@ async function loadData() {
   console.log('Possible N-Number mismatches (in history but not in aircraft):', 
     Object.keys(histByNN).filter(function(nn) { return aircraftNN.indexOf(nn) === -1; }));
 
-  // ── Draw track history polylines ─────────────────────────────────────────
+  // ── Draw track history polylines (initially hidden) ──────────────────────
+  tracksByAircraft = {}; // Reset for this load
+  visibleTracks = {}; // Reset visibility tracking
+  
   Object.keys(histByNN).forEach(function(nn) {
     var pts = histByNN[nn];
     if (pts.length < 2) return;
@@ -364,13 +369,18 @@ async function loadData() {
     var latlngs = pts.map(function(p){ return [p.lat, p.lon]; });
     var color = colorIndex[nn] || '#1a56db';
     
-    // Main polyline for the track
+    tracksByAircraft[nn] = []; // Array to hold all track elements for this aircraft
+    visibleTracks[nn] = false; // Initially hidden
+    
+    // Main polyline for the track (hidden initially)
     var line = L.polyline(latlngs, {
       color: color, weight: 2.5, opacity: 0.65, dashArray: '6 4'
-    }).addTo(map);
+    });
+    // Don't add to map yet - store for later
+    tracksByAircraft[nn].push(line);
     trackLines.push(line);
 
-    // Small dots at each history point
+    // Small dots at each history point (hidden initially)
     pts.forEach(function(p, idx) {
       var isNewest = (idx === pts.length - 1);
       var dot = L.circleMarker([p.lat, p.lon], {
@@ -380,7 +390,9 @@ async function loadData() {
         fillOpacity: isNewest ? 0.8 : 0.4,
         weight: 1,
         opacity: isNewest ? 0.9 : 0.6
-      }).addTo(map);
+      });
+      // Don't add to map yet - store for later
+      tracksByAircraft[nn].push(dot);
       trackLines.push(dot);
     });
   });
@@ -471,6 +483,12 @@ async function loadData() {
     var marker = L.marker([lat, lon], { icon: planeIcon(track, color, photoUrl) })
       .bindPopup(popup, { maxWidth: 280 })
       .addTo(map);
+    
+    // Add click event to show/hide track history
+    marker.on('click', function() {
+      toggleAircraftTrack(nn, tracksByAircraft[nn]);
+    });
+    
     acMarkers.push(marker);
     bounds.push([lat, lon]);
     plotted++;
@@ -505,6 +523,27 @@ async function loadData() {
 
   document.getElementById('loading').classList.add('hidden');
   btn.disabled = false;
+}
+
+// ─── TOGGLE AIRCRAFT TRACK VISIBILITY ────────────────────────────────────────
+function toggleAircraftTrack(aircraftNN, trackElements) {
+  if (!trackElements || trackElements.length === 0) return;
+  
+  var isVisible = visibleTracks[aircraftNN];
+  
+  if (isVisible) {
+    // Hide the track
+    trackElements.forEach(function(element) {
+      map.removeLayer(element);
+    });
+    visibleTracks[aircraftNN] = false;
+  } else {
+    // Show the track
+    trackElements.forEach(function(element) {
+      map.addLayer(element);
+    });
+    visibleTracks[aircraftNN] = true;
+  }
 }
 
 // ─── LANDING CONFIRMATION ────────────────────────────────────────────────────
