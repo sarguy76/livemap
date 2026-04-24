@@ -357,12 +357,13 @@ async function loadData() {
   // ── Plot current aircraft positions ──────────────────────────────────────
   var total = acRecords.length, airborneCount = 0, plotted = 0;
   var bounds = [];
+  var modelCounts = {}; // Track airborne by model
 
   acRecords.forEach(function(r) {
     var ff = r.fields;
     var nn      = ff[F_NN]     || '';
     var title   = ff[F_TITLE]  || nn;
-    var model   = ff[F_MODEL]  || '';
+    var model   = ff[F_MODEL]  || 'Unknown';
     var status  = ff[F_STATUS] || '';
     var airborn = ff[F_AIRBORN];
     var icao    = ff[F_ICAO]   || '—';
@@ -378,23 +379,40 @@ async function loadData() {
     var dest    = ff[F_DEST]   || '—';
     var seen    = ff[F_SEEN]   || '—';
     var histPts = histByNN[nn] ? histByNN[nn].length : 0;
+    
+    // Extract photo URL from Photo - Profile field
+    var photoUrl = null;
+    if (ff[F_PHOTO] && Array.isArray(ff[F_PHOTO]) && ff[F_PHOTO].length > 0) {
+      photoUrl = ff[F_PHOTO][0].url;
+    }
+    
+    // Extract FlightAware link
+    var flightAware = ff[F_FLIGHTAWARE] || '';
 
     var isAirborne = !!airborn;
-    if (isAirborne) airborneCount++;
+    if (isAirborne) {
+      airborneCount++;
+      // Count by model
+      if (!modelCounts[model]) modelCounts[model] = 0;
+      modelCounts[model]++;
+    }
     if (!isAirborne || isNaN(lat) || isNaN(lon)) return;
 
-    var parts = title.split(' - ');
-    var tail  = parts[0] || nn;
-    var mdl   = model || parts.slice(1).join(' ') || '';
     var color = colorIndex[nn] || '#1a56db';
+    
+    // Generate Airtable record URL
+    var acRecordUrl = 'https://airtable.com/' + BASE_ID + '/pagS9wQ4nxhgnIvAi?ZFHQs=' + r.id;
 
     var popup =
       '<div class="popup-inner">' +
-        '<div class="popup-tail">' + tail + (cs && cs !== nn ? ' · ' + cs : '') + '</div>' +
-        '<div class="popup-model">' + mdl + '</div>' +
-        '<div class="popup-badge">' +
-          '<span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>' +
-          (status || 'Airborne') +
+        '<div class="popup-tail">' + nn + '</div>' +
+        '<div class="popup-model">' + title + '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+          '<div class="popup-badge">' +
+            '<span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block;flex-shrink:0;"></span>' +
+            (status || 'Airborne') +
+          '</div>' +
+          '<button class="popup-btn" onclick="window.open(\'' + acRecordUrl + '\',\'_blank\')">A/C Record ↗</button>' +
         '</div>' +
         '<div class="popup-grid">' +
           '<div><div class="popup-lbl">Altitude</div><div class="popup-val">' + alt + '</div></div>' +
@@ -411,13 +429,15 @@ async function loadData() {
           : '') +
         '<div class="popup-actions">' +
           (icao !== '—'
-            ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B Exchange ↗</button>'
+            ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B ↗</button>'
             : '') +
-          '<button class="popup-btn popup-btn-land" onclick="confirmLanding(\'' + r.id + '\',\'' + nn + '\',' + histPts + ')">Mark landed + clear</button>' +
+          (flightAware
+            ? '<button class="popup-btn" onclick="window.open(\'' + flightAware + '\',\'_blank\')">FlightAware ↗</button>'
+            : '') +
         '</div>' +
       '</div>';
 
-    var marker = L.marker([lat, lon], { icon: planeIcon(track, color) })
+    var marker = L.marker([lat, lon], { icon: planeIcon(track, color, photoUrl) })
       .bindPopup(popup, { maxWidth: 280 })
       .addTo(map);
     acMarkers.push(marker);
@@ -441,9 +461,14 @@ async function loadData() {
     map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12 });
   }
 
-  // Update status bar
+  // Update status bar with model breakdown
+  var modelStr = Object.keys(modelCounts)
+    .sort(function(a, b) { return modelCounts[b] - modelCounts[a]; })
+    .map(function(m) { return modelCounts[m] + ' ' + m; })
+    .join(', ');
+  
   document.getElementById('statusbar').textContent = plotted > 0
-    ? plotted + ' airborne · ' + Object.keys(histByNN).length + ' aircraft with track history · ' + rawHist.length + ' total track points · Click aircraft for details'
+    ? plotted + ' airborne (' + modelStr + ') · ' + Object.keys(histByNN).length + ' aircraft with track history · ' + rawHist.length + ' total track points · Click aircraft for details'
     : 'No airborne aircraft with position data · ' + total + ' total in fleet · ' + rawHist.length + ' track points stored';
 
   document.getElementById('loading').classList.add('hidden');
