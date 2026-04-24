@@ -239,12 +239,11 @@ async function atFetch(path, opts) {
   return resp.json();
 }
 
-async function fetchAllFromTable(tableId, fieldNames, expandLinks) {
+async function fetchAllFromTable(tableId, fieldNames) {
   var params = fieldNames.map(function(n){ return 'fields[]=' + encodeURIComponent(n); }).join('&');
   var records = [], offset = null;
   do {
     var url = '/' + tableId + '?' + params + '&pageSize=100';
-    if (expandLinks) url += '&cellFormat=json';
     if (offset) url += '&offset=' + encodeURIComponent(offset);
     var data = await atFetch(url);
     records = records.concat(data.records || []);
@@ -287,10 +286,10 @@ async function loadData() {
       F_NN, F_TITLE, F_MODEL, F_STATUS, F_AIRBORN, F_ICAO,
       F_LAT, F_LON, F_ALT, F_GS, F_TRACK, F_LOC,
       F_SQUAWK, F_CS, F_ORIGIN, F_DEST, F_SEEN, F_PHOTO, F_FLIGHTAWARE
-    ], false);  // Don't use cellFormat for aircraft table
+    ]);
 
     document.getElementById('loading-label').textContent = 'Loading track history…';
-    rawHist = await fetchAllFromTable(HIST_TABLE, [HF_NN, HF_TS, HF_LAT, HF_LON, HF_FID], true);  // Use cellFormat for track history
+    rawHist = await fetchAllFromTable(HIST_TABLE, [HF_NN, HF_TS, HF_LAT, HF_LON, HF_FID]);
     histRecords = rawHist;
   } catch(e) {
     document.getElementById('loading').innerHTML =
@@ -302,28 +301,24 @@ async function loadData() {
   }
 
   // ── Build track history lookup: NN → sorted array of {lat, lon, ts, id} ─
+  // First, create a map of aircraft record IDs to N-Numbers
+  var acIdToNN = {};
+  acRecords.forEach(function(r) {
+    acIdToNN[r.id] = r.fields[F_NN] || '';
+  });
+  
   var histByNN = {};
   var debugNN = []; // Debug: track what N-Numbers we're finding
   rawHist.forEach(function(r) {
     var linked = r.fields[HF_NN];
     var nn = '';
     
-    // With cellFormat=json, linked records come back as objects with expanded data
-    if (Array.isArray(linked)) {
-      // Array of linked records
-      if (linked.length > 0) {
-        var firstLink = linked[0];
-        if (typeof firstLink === 'object' && firstLink.fields) {
-          nn = firstLink.fields['N-Number'] || '';
-        } else if (typeof firstLink === 'string') {
-          nn = firstLink;
-        }
-      }
-    } else if (linked && typeof linked === 'object' && linked.fields) {
-      // Single linked record object
-      nn = linked.fields['N-Number'] || '';
+    // The linked field contains either a record ID or an array of record IDs
+    // We need to look them up in our acIdToNN map
+    if (Array.isArray(linked) && linked.length > 0) {
+      nn = acIdToNN[linked[0]] || '';
     } else if (typeof linked === 'string') {
-      nn = linked;
+      nn = acIdToNN[linked] || '';
     }
     
     nn = nn.trim();
