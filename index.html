@@ -62,6 +62,12 @@
   .modal-title { font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 8px; }
   .modal-body  { font-size: 13px; color: #6b7280; line-height: 1.6; margin-bottom: 18px; }
   .modal-acts  { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .legend { position: absolute; bottom: 20px; right: 20px; background: rgba(255,255,255,0.96); padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); font-size: 11px; z-index: 1000; }
+  .legend-title { font-weight: 600; margin-bottom: 8px; color: #333; font-size: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: #555; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .legend-line { width: 20px; height: 2px; border-top: 2px dashed #666; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -86,6 +92,11 @@
   </div>
   <div id="map"></div>
   <div id="statusbar">Initializing…</div>
+  <div class="legend" style="display: none;">
+    <div class="legend-title">Track History</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a56db;"></div><span>Current Position</span></div>
+    <div class="legend-item"><div class="legend-line" style="border-color:#1a56db;"></div><span>Flight Path</span></div>
+  </div>
 </div>
 
 <div id="loading">
@@ -111,9 +122,16 @@ const AIRTABLE_TOKEN = 'patgkv5RrBFKkceOU.aecbf876e60c06f078e94d8ee4df3e9cbd90bc
 const BASE_ID        = 'appPnZ5jc99OYswdm';
 const AC_TABLE       = 'tbl9GsDvW3Vwu6dTX';   // Aircraft Data
 const HIST_TABLE     = 'tblgTqap1nhbaa5FD';   // Aircraft Track History
+
+// Default map center (San Diego area) - will auto-fit to aircraft bounds
+const DEFAULT_CENTER = [32.7157, -117.1611];
+const DEFAULT_ZOOM   = 10;
+
+// Auto-refresh interval in milliseconds (60000ms = 60 seconds)
+const REFRESH_INTERVAL = 60000;
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Aircraft Data field names (Airtable API uses names, not IDs, in REST responses)
+// Aircraft Data field names
 const F_NN      = 'N-Number';
 const F_TITLE   = 'Mailing List Title';
 const F_MODEL   = 'Model Group';
@@ -132,7 +150,7 @@ const F_ORIGIN  = 'Origin ICAO';
 const F_DEST    = 'Destination ICAO';
 const F_SEEN    = 'Last Seen (sec ago)';
 
-// Aircraft Data field IDs (needed for PATCH updates)
+// Aircraft Data field IDs (for PATCH updates)
 const FID_AIRBORN = 'fld443YjcAFlV4GNa';
 const FID_CS      = 'fldS0NIqjlcAqPQV1';
 const FID_ORIGIN  = 'fldjamsMbZ3tiJPs6';
@@ -149,28 +167,28 @@ const FID_TRKRAW  = 'fldrWz2pLLYW3yPEP';
 const FID_VSIRAW  = 'fldg5dCK9svPovezS';
 
 // Track History field names
-const HF_NN    = 'N-Number';   // linked record — returns array of {id, name}
+const HF_NN    = 'N-Number';   // linked record
 const HF_TS    = 'Timestamp';
 const HF_LAT   = 'Latitude';
 const HF_LON   = 'Longitude';
 const HF_FID   = 'Flight ID';
 
-// Track colors per aircraft (cycles)
+// Track colors (cycles through aircraft)
 const TRACK_COLORS = ['#1a56db','#c0392b','#7f56da','#0e9f6e','#c27803','#d45087'];
 let colorIndex = {};
 
-let map, acMarkers = [], trackLines = [], histRecords = [];
+let map, acMarkers = [], trackLines = [], histRecords = [], refreshTimer = null;
 
 // ─── MAP INIT ────────────────────────────────────────────────────────────────
 function initMap() {
-  map = L.map('map').setView([33.1, -117.2], 10);
+  map = L.map('map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
   }).addTo(map);
 }
 
-// ─── ICON ────────────────────────────────────────────────────────────────────
+// ─── AIRCRAFT ICON ───────────────────────────────────────────────────────────
 function planeIcon(trackStr, color) {
   var deg = 0;
   if (trackStr) {
@@ -178,7 +196,6 @@ function planeIcon(trackStr, color) {
     if (m) deg = parseFloat(m[1]) || 0;
   }
   var c = color || '#1a56db';
-  var bg = c + '20'; // 12% alpha hex approximation
   return L.divIcon({
     html: '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;transform:rotate('+deg+'deg);">' +
           '<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -226,7 +243,6 @@ async function patchRecord(tableId, recId, fields) {
 }
 
 async function deleteRecords(tableId, ids) {
-  // Airtable allows up to 10 deletes per request
   for (var i = 0; i < ids.length; i += 10) {
     var batch = ids.slice(i, i + 10);
     var qs = batch.map(function(id){ return 'records[]=' + id; }).join('&');
@@ -267,7 +283,7 @@ async function loadData() {
     return;
   }
 
-  // ── Build track history lookup: NN → sorted array of {lat, lon, ts} ──────
+  // ── Build track history lookup: NN → sorted array of {lat, lon, ts, id} ─
   var histByNN = {};
   rawHist.forEach(function(r) {
     var linked = r.fields[HF_NN];
@@ -279,17 +295,18 @@ async function loadData() {
     if (!histByNN[nn]) histByNN[nn] = [];
     histByNN[nn].push({ lat: lat, lon: lon, ts: r.fields[HF_TS] || '', id: r.id });
   });
+  
+  // Sort each aircraft's history by timestamp (oldest first)
   Object.keys(histByNN).forEach(function(nn) {
     histByNN[nn].sort(function(a, b){ return a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0; });
   });
 
-  // Assign colors to aircraft that have history
+  // Assign colors: first to aircraft with track history, then to others
   var ci = 0;
   colorIndex = {};
   Object.keys(histByNN).forEach(function(nn) {
     colorIndex[nn] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
   });
-  // Also assign colors for airborne aircraft not yet in history
   acRecords.forEach(function(r) {
     var nn = r.fields[F_NN] || '';
     if (!colorIndex[nn]) colorIndex[nn] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
@@ -299,18 +316,26 @@ async function loadData() {
   Object.keys(histByNN).forEach(function(nn) {
     var pts = histByNN[nn];
     if (pts.length < 2) return;
+    
     var latlngs = pts.map(function(p){ return [p.lat, p.lon]; });
     var color = colorIndex[nn] || '#1a56db';
+    
+    // Main polyline for the track
     var line = L.polyline(latlngs, {
       color: color, weight: 2.5, opacity: 0.65, dashArray: '6 4'
     }).addTo(map);
     trackLines.push(line);
 
     // Small dots at each history point
-    pts.forEach(function(p) {
+    pts.forEach(function(p, idx) {
+      var isNewest = (idx === pts.length - 1);
       var dot = L.circleMarker([p.lat, p.lon], {
-        radius: 3, color: color, fillColor: color,
-        fillOpacity: 0.5, weight: 1, opacity: 0.7
+        radius: isNewest ? 4 : 2.5,
+        color: color,
+        fillColor: color,
+        fillOpacity: isNewest ? 0.8 : 0.4,
+        weight: 1,
+        opacity: isNewest ? 0.9 : 0.6
       }).addTo(map);
       trackLines.push(dot);
     });
@@ -369,13 +394,13 @@ async function loadData() {
           '<div><div class="popup-lbl">ICAO24</div><div class="popup-val" style="color:#9ca3af;">' + icao + '</div></div>' +
         '</div>' +
         (histPts > 0
-          ? '<div class="popup-track-info">' + histPts + ' track point' + (histPts !== 1 ? 's' : '') + ' on file for this flight</div>'
+          ? '<div class="popup-track-info">' + histPts + ' track point' + (histPts !== 1 ? 's' : '') + ' recorded</div>'
           : '') +
         '<div class="popup-actions">' +
           (icao !== '—'
             ? '<button class="popup-btn" onclick="openADSB(\'' + icao + '\')">ADS-B Exchange ↗</button>'
             : '') +
-          '<button class="popup-btn popup-btn-land" onclick="confirmLanding(\'' + r.id + '\',\'' + nn + '\',' + histPts + ')">Mark landed + clear data</button>' +
+          '<button class="popup-btn popup-btn-land" onclick="confirmLanding(\'' + r.id + '\',\'' + nn + '\',' + histPts + ')">Mark landed + clear</button>' +
         '</div>' +
       '</div>';
 
@@ -392,15 +417,18 @@ async function loadData() {
     pts.forEach(function(p){ bounds.push([p.lat, p.lon]); });
   });
 
+  // Update stats
   document.getElementById('stat-airborne').textContent = airborneCount;
   document.getElementById('stat-ground').textContent   = total - airborneCount;
   document.getElementById('stat-pts').textContent      = rawHist.length;
   document.getElementById('stat-time').textContent     = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+  // Fit map to bounds
   if (bounds.length > 0) {
     map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12 });
   }
 
+  // Update status bar
   document.getElementById('statusbar').textContent = plotted > 0
     ? plotted + ' airborne · ' + Object.keys(histByNN).length + ' aircraft with track history · ' + rawHist.length + ' total track points · Click aircraft for details'
     : 'No airborne aircraft with position data · ' + total + ' total in fleet · ' + rawHist.length + ' track points stored';
@@ -409,7 +437,7 @@ async function loadData() {
   btn.disabled = false;
 }
 
-// ─── CONFIRM + LAND ──────────────────────────────────────────────────────────
+// ─── LANDING CONFIRMATION ────────────────────────────────────────────────────
 function confirmLanding(recId, nn, histCount) {
   document.getElementById('modal-title').textContent = 'Mark ' + nn + ' as landed?';
   document.getElementById('modal-body').textContent =
@@ -475,10 +503,23 @@ function openADSB(icao) {
   window.open('https://globe.adsbexchange.com/?icao=' + icao, '_blank');
 }
 
+// ─── INIT & AUTO-REFRESH ────────────────────────────────────────────────────
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(loadData, REFRESH_INTERVAL);
+}
+
 // ─── START ───────────────────────────────────────────────────────────────────
-initMap();
-loadData();
-setInterval(loadData, 60000); // auto-refresh every 60 seconds
+window.addEventListener('load', function() {
+  initMap();
+  loadData();
+  startAutoRefresh();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+  if (refreshTimer) clearInterval(refreshTimer);
+});
 </script>
 </body>
 </html>
