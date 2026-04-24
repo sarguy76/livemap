@@ -243,7 +243,7 @@ async function fetchAllFromTable(tableId, fieldNames) {
   var params = fieldNames.map(function(n){ return 'fields[]=' + encodeURIComponent(n); }).join('&');
   var records = [], offset = null;
   do {
-    var url = '/' + tableId + '?' + params + '&pageSize=100';
+    var url = '/' + tableId + '?' + params + '&pageSize=100&cellFormat=string';
     if (offset) url += '&offset=' + encodeURIComponent(offset);
     var data = await atFetch(url);
     records = records.concat(data.records || []);
@@ -307,15 +307,16 @@ async function loadData() {
     var linked = r.fields[HF_NN];
     var nn = '';
     
-    // Handle different link formats: array of objects, single object, or string
-    if (Array.isArray(linked)) {
+    // With cellFormat=string, linked records come back as strings (e.g., "N734VX")
+    // or arrays of strings for multiple links
+    if (typeof linked === 'string') {
+      nn = linked.trim();
+    } else if (Array.isArray(linked)) {
       if (linked.length > 0) {
-        nn = linked[0].name || linked[0] || '';
+        nn = String(linked[0]).trim();
       }
     } else if (linked && typeof linked === 'object') {
-      nn = linked.name || '';
-    } else if (linked) {
-      nn = String(linked);
+      nn = (linked.name || '').trim();
     }
     
     if (!nn) return;
@@ -396,6 +397,8 @@ async function loadData() {
       trackLines.push(dot);
     });
   });
+  
+  console.log('tracksByAircraft keys:', Object.keys(tracksByAircraft));
 
   // ── Plot current aircraft positions ──────────────────────────────────────
   var total = acRecords.length, airborneCount = 0, plotted = 0;
@@ -422,6 +425,11 @@ async function loadData() {
     var dest    = ff[F_DEST]   || '—';
     var seen    = ff[F_SEEN]   || '—';
     var histPts = histByNN[nn] ? histByNN[nn].length : 0;
+    
+    // Debug: check if this aircraft has track data
+    if (nn && !histByNN[nn] && Object.keys(histByNN).length > 0) {
+      console.log('Aircraft N-Number:', nn, '| Track history N-Numbers:', Object.keys(histByNN));
+    }
     
     // Extract photo URL from Photo - Profile field
     var photoUrl = null;
